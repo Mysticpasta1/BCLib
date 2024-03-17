@@ -1,5 +1,8 @@
 package org.betterx.bclib.api.v2.dataexchange.handler.autosync;
 
+import cpw.mods.modlauncher.Environment;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import org.betterx.bclib.BCLib;
 import org.betterx.bclib.api.v2.dataexchange.DataExchangeAPI;
 import org.betterx.bclib.api.v2.dataexchange.DataHandler;
@@ -94,8 +97,6 @@ public class HelloClient extends DataHandler.FromServer {
                         .getMods()
                         .entrySet()
                         .stream()
-                        .filter(entry -> entry.getValue().metadata.getEnvironment() != ModEnvironment.SERVER && !inmods.contains(
-                                entry.getKey()))
                         .map(entry -> entry.getKey())
                         .collect(Collectors.toList())
                 );
@@ -181,7 +182,7 @@ public class HelloClient extends DataHandler.FromServer {
     List<SyncFolderDescriptor> autoSynFolders = null;
     boolean serverPublishedModInfo = false;
 
-    @Environment(EnvType.CLIENT)
+    @OnlyIn(Dist.CLIENT)
     @Override
     protected void deserializeIncomingDataOnClient(FriendlyByteBuf buf, PacketSender responseSender) {
         //read BCLibVersion (=protocol version)

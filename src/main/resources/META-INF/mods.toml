@@ -1,0 +1,32 @@
+modLoader="javafml"
+loaderVersion="[43,)"
+license="MIT (CC BY-NC-SA 4.0 for some Assets)"
+issueTrackerURL="https://github.com/quiqueck/bclib/issues"
+
+[[mods]]
+modId="bclib"
+version="1.0.0-forge"
+displayName="BCLib"
+displayURL="https://github.com/Exploding-Creeper/atlantis"
+logoFile= ""
+credits='''
+'''
+authors="Mysticpasta1, Quiqueck, paulevs, Bulldog83"
+description='''
+A library for BetterX team mods
+'''
+
+# Base
+[[dependencies.bclib]]
+modId="forge"
+mandatory=true
+versionRange="[43,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.bclib]]
+modId="minecraft"
+mandatory=true
+versionRange="[1.19.2, 1.20)"
+ordering="NONE"
+side="BOTH"

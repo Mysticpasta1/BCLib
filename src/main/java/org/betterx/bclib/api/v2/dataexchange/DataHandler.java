@@ -1,5 +1,10 @@
 package org.betterx.bclib.api.v2.dataexchange;
 
+import io.netty.buffer.ByteBufUtil;
+import io.netty.buffer.CompositeByteBuf;
+import net.minecraft.network.protocol.PacketUtils;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import org.betterx.bclib.BCLib;
 import org.betterx.bclib.api.v2.dataexchange.handler.autosync.Chunker;
 
@@ -265,22 +270,21 @@ public abstract class DataHandler extends BaseDataHandler {
 
         abstract protected void serializeDataOnServer(FriendlyByteBuf buf);
 
-        @Environment(EnvType.CLIENT)
-        abstract protected void deserializeIncomingDataOnClient(FriendlyByteBuf buf, PacketSender responseSender);
+        @OnlyIn(Dist.CLIENT)
+        abstract protected void deserializeIncomingDataOnClient(FriendlyByteBuf buf);
 
-        @Environment(EnvType.CLIENT)
+        @OnlyIn(Dist.CLIENT)
         abstract protected void runOnClientGameThread(Minecraft client);
 
 
-        @Environment(EnvType.CLIENT)
+        @OnlyIn(Dist.CLIENT)
         @Override
         final void receiveFromServer(
                 Minecraft client,
                 ClientPacketListener handler,
-                FriendlyByteBuf buf,
-                PacketSender responseSender
+                FriendlyByteBuf buf
         ) {
-            deserializeIncomingDataOnClient(buf, responseSender);
+            deserializeIncomingDataOnClient(buf);
             final Runnable runner = () -> runOnClientGameThread(client);
 
             if (isBlocking()) client.executeBlocking(runner);
@@ -292,21 +296,20 @@ public abstract class DataHandler extends BaseDataHandler {
                 MinecraftServer server,
                 ServerPlayer player,
                 ServerGamePacketListenerImpl handler,
-                FriendlyByteBuf buf,
-                PacketSender responseSender
+                FriendlyByteBuf buf
         ) {
-            super.receiveFromClient(server, player, handler, buf, responseSender);
+            super.receiveFromClient(server, player, handler, buf);
             BCLib.LOGGER.error("[Internal Error] The message '" + getIdentifier() + "' must originate from the server!");
         }
 
         public void receiveFromMemory(FriendlyByteBuf buf) {
-            receiveFromServer(Minecraft.getInstance(), null, buf, null);
+            receiveFromServer(Minecraft.getInstance(), null, buf);
         }
 
         @Override
         final void sendToClient(MinecraftServer server) {
             if (prepareDataOnServer()) {
-                FriendlyByteBuf buf = PacketByteBufs.create();
+                FriendlyByteBuf buf = ;
                 serializeDataOnServer(buf);
 
                 _sendToClient(getIdentifier(), server, PlayerLookup.all(server), buf);

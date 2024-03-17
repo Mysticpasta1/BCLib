@@ -14,6 +14,98 @@ archivesBaseName = project.archives_base_name
 version = project.mod_version
 group = project.maven_group
 
+minecraft {
+    mappings channel: project.mappings, version: project.mappings_version
+
+    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+
+    runs {
+        client {
+            workingDirectory project.file('run')
+
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            property 'forge.enabledGameTestNamespaces', 'examplemod'
+
+            arg "-mixin.config=together.mixins.common.json"
+            arg "-mixin.config=together.mixins.client.json"
+            arg "-mixin.config=ui.mixins.client.json"
+            arg "-mixin.config=bclib.mixins.common.json"
+            arg "-mixin.config=bclib.mixins.client.json"
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+
+            mods {
+                bclib {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        server {
+            workingDirectory project.file('run')
+
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            property 'forge.enabledGameTestNamespaces', 'examplemod'
+
+            arg "-mixin.config=together.mixins.common.json"
+            arg "-mixin.config=together.mixins.client.json"
+            arg "-mixin.config=ui.mixins.client.json"
+            arg "-mixin.config=bclib.mixins.common.json"
+            arg "-mixin.config=bclib.mixins.client.json"
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+
+            mods {
+                bclib {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        gameTestServer {
+            workingDirectory project.file('run')
+
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            property 'forge.enabledGameTestNamespaces', 'examplemod'
+
+            arg "-mixin.config=together.mixins.common.json"
+            arg "-mixin.config=together.mixins.client.json"
+            arg "-mixin.config=ui.mixins.client.json"
+            arg "-mixin.config=bclib.mixins.common.json"
+            arg "-mixin.config=bclib.mixins.client.json"
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+
+            mods {
+                bclib {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        data {
+            workingDirectory project.file('run')
+
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+
+            args '--mod', 'bclib', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+
+            mods {
+                bclib {
+                    source sourceSets.main
+                }
+            }
+        }
+    }
+}
+
 repositories {
     maven { url "https://maven.dblsaiko.net/" }
     maven { url "https://maven.fabricmc.net/" }
@@ -24,19 +116,12 @@ repositories {
     maven { url 'https://maven.terraformersmc.com' }
 }
 
-loom {
-    accessWidenerPath = file("src/main/resources/bclib.accesswidener")
-}
-
 dependencies {
-    minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings loom.officialMojangMappings()
-    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-    modCompileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
-    modCompileOnly "dev.emi:emi-fabric:${emi_version}:api"
-    modLocalRuntime "dev.emi:emi-fabric:${emi_version}"
+    compileOnly fg.deobf("dev.emi:emi-forge:${emi_version}:api")
+    runtimeOnly fg.deobf("dev.emi:emi-forge:${emi_version}")
 }
 
 processResources {
@@ -62,7 +147,7 @@ javadoc {
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
+    archiveClassifier = 'javadoc'
     from javadoc.destinationDir
 }
 
@@ -70,13 +155,24 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 // if it is present.
 // If you remove this task, sources will not be generated.
 task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
+    archiveClassifier = 'sources'
     from sourceSets.main.allSource
 }
 
 jar {
     from "LICENSE"
     from "LICENSE.ASSETS"
+}
+
+mixin {
+    add sourceSets.main, "bclib.refmap.json"
+    config "together.mixins.common.json"
+    config "together.mixins.client.json"
+    config "ui.mixins.client.json"
+    config "bclib.mixins.common.json"
+    config "bclib.mixins.client.json"
+
+    debug.verbose = true
 }
 
 artifacts {
@@ -86,41 +182,11 @@ artifacts {
 
 def env = System.getenv()
 
-import org.kohsuke.github.GHReleaseBuilder
-import org.kohsuke.github.GitHub
-
-task release(dependsOn: [remapJar, sourcesJar, javadocJar]) {
-    onlyIf {
-        env.GITHUB_TOKEN
-    }
-
-    doLast {
-        def github = GitHub.connectUsingOAuth(env.GITHUB_TOKEN as String)
-        def repository = github.getRepository("quiqueck/BCLib")
-
-        def releaseBuilder = new GHReleaseBuilder(repository, version as String)
-        releaseBuilder.name("${archivesBaseName}-${version}")
-        releaseBuilder.body("A changelog can be found at https://github.com/quiqueck/BCLib/commits")
-        releaseBuilder.commitish("main")
-
-        def ghRelease = releaseBuilder.create()
-        ghRelease.uploadAsset(file("${project.buildDir}/libs/${archivesBaseName}-${version}.jar"), "application/java-archive");
-        ghRelease.uploadAsset(file("${project.buildDir}/libs/${archivesBaseName}-${version}-sources.jar"), "application/java-archive");
-        ghRelease.uploadAsset(file("${project.buildDir}/libs/${archivesBaseName}-${version}-javadoc.jar"), "application/java-archive");
-    }
-}
-
 // configure the maven publication
 publishing {
     publications {
         gpr(MavenPublication) {
             artifactId archivesBaseName
-            artifact(remapJar) {
-                builtBy remapJar
-            }
-            artifact(sourcesJar) {
-                builtBy remapSourcesJar
-            }
         }
     }
 

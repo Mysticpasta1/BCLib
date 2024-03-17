@@ -8,12 +8,11 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.networking.v1.PacketSender;
-
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class BaseDataHandler {
@@ -34,12 +33,11 @@ public abstract class BaseDataHandler {
         return identifier;
     }
 
-    @Environment(EnvType.CLIENT)
+    @OnlyIn(Dist.CLIENT)
     abstract void receiveFromServer(
             Minecraft client,
             ClientPacketListener handler,
-            FriendlyByteBuf buf,
-            PacketSender responseSender
+            FriendlyByteBuf buf
     );
 
     private ServerPlayer lastMessageSender;
@@ -48,8 +46,7 @@ public abstract class BaseDataHandler {
             MinecraftServer server,
             ServerPlayer player,
             ServerGamePacketListenerImpl handler,
-            FriendlyByteBuf buf,
-            PacketSender responseSender
+            FriendlyByteBuf buf
     ) {
         lastMessageSender = player;
     }
@@ -64,7 +61,7 @@ public abstract class BaseDataHandler {
 
     abstract void sendToClient(MinecraftServer server, ServerPlayer player);
 
-    @Environment(EnvType.CLIENT)
+    @OnlyIn(Dist.CLIENT)
     abstract void sendToServer(Minecraft client);
 
     protected boolean isBlocking() {

@@ -1,8 +1,10 @@
 plugins {
-	id 'idea'
+	id 'net.minecraftforge.gradle' version '6.+'
+	id 'org.parchmentmc.librarian.forgegradle' version '1.+'
+	id 'org.spongepowered.mixin' version '0.7.+'
 	id 'eclipse'
-	id 'fabric-loom'
 	id 'maven-publish'
 }
+
 
 apply from: "bclib.gradle"
